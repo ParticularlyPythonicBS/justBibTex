@@ -15,4 +15,5 @@ Just BibTeX is a simple web app that fetches BibTeX entries for DOIs, arXiv URLs
 4. Use the **Copy** and **Download** buttons to manage your entries.
 
 ### URL-based DOI Fetching
-You can directly fetch BibTeX for a DOI by appending it to the URL:
+You can directly fetch BibTeX for a DOI by appending it to the URL: [justbibtex.org/doi](https://justbibtex.org/)
+
