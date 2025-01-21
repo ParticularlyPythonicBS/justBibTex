@@ -14,7 +14,7 @@
         --surface-hover: #45475a; /* Surface color on hover */
         --muted: #6c7086; /* Muted text */
         --error: #f38ba8; /* Error messages */
-      }
+        }
       body {
         font-family: sans-serif;
         margin: 20px;
@@ -93,7 +93,7 @@
   </head>
   <body>
     <h1>Just BibTeX</h1>
-    <input id="doiInput" type="text" placeholder="Enter DOI" />
+    <input id="doiInput" type="text" placeholder="Enter DOI, arXiv URL, or Journal URL" />
     <button onclick="addBibtex()">Fetch Bibtex & Add</button>
     <div id="entries"></div>
 
@@ -114,25 +114,75 @@
         localStorage.setItem('bibtexEntries', JSON.stringify(entries));
       }
 
+      async function fetchBibtexFromDOI(doi) {
+        const response = await fetch(`https://doi.org/${encodeURIComponent(doi)}`, {
+          headers: { Accept: 'application/x-bibtex' }
+        });
+        if (!response.ok) throw new Error('BibTeX not found for this DOI.');
+        return await response.text();
+      }
+
+      async function fetchBibtexFromArxiv(arxivId) {
+        const response = await fetch(`https://export.arxiv.org/api/query?id_list=${arxivId}`);
+        if (!response.ok) throw new Error('Failed to fetch arXiv metadata.');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, 'text/xml');
+
+        const entry = xmlDoc.querySelector('entry');
+        if (!entry) throw new Error('No arXiv entry found.');
+
+        const title = entry.querySelector('title').textContent.replace(/\n/g, ' ').trim();
+        const authors = Array.from(entry.querySelectorAll('author name')).map(
+          (el) => el.textContent.trim()
+        );
+        const published = new Date(entry.querySelector('published').textContent);
+        const year = published.getFullYear();
+        const summary = entry.querySelector('summary').textContent.trim();
+
+        const bibtex = `@article{${arxivId},
+  title = {${title}},
+  author = {${authors.join(' and ')}},
+  year = {${year}},
+  eprint = {${arxivId}},
+  archivePrefix = {arXiv},
+  primaryClass = {${entry.querySelector('category').getAttribute('term')}},
+  journal = {arXiv preprint},
+  url = {https://arxiv.org/abs/${arxivId}},
+  note = {${summary}}
+}`;
+
+        return bibtex;
+      }
+
+      async function fetchBibtexFromUrl(url) {
+        // Use Zotero's translation server to fetch BibTeX from a URL
+        const response = await fetch(`https://api.zotero.org/quickFormat?url=${encodeURIComponent(url)}&format=bibtex`);
+        if (!response.ok) throw new Error('Failed to fetch BibTeX for this URL.');
+        return await response.text();
+      }
+
       async function addBibtex() {
         const input = document.getElementById('doiInput').value.trim();
         if (!input) {
-          alert('Please enter a DOI.');
-          return;
-        }
-
-        // Basic DOI format validation
-        if (!/^10\.\d{4,}\/\S+$/.test(input)) {
-          alert('Invalid DOI format.');
+          alert('Please enter a DOI, arXiv URL, or Journal URL.');
           return;
         }
 
         try {
-          const response = await fetch(`https://doi.org/${encodeURIComponent(input)}`, {
-            headers: { Accept: 'application/x-bibtex' }
-          });
-          if (!response.ok) throw new Error('BibTeX not found for this DOI.');
-          const bibtex = await response.text();
+          let bibtex;
+          if (/^10\.\d{4,}\/\S+$/.test(input)) {
+            // Handle DOI
+            bibtex = await fetchBibtexFromDOI(input);
+          } else if (/arxiv\.org\/abs\/|^arxiv:/i.test(input)) {
+            // Handle arXiv URL or ID
+            const arxivId = input.match(/(\d{4}\.\d{4,5}(v\d+)?)/)?.[0];
+            if (!arxivId) throw new Error('Invalid arXiv URL or ID.');
+            bibtex = await fetchBibtexFromArxiv(arxivId);
+          } else {
+            // Handle journal URLs
+            bibtex = await fetchBibtexFromUrl(input);
+          }
 
           const entries = loadEntries();
           if (entries.includes(bibtex)) {
