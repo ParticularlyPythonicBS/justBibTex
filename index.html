@@ -4,30 +4,95 @@
     <meta charset="UTF-8" />
     <title>Just BibTeX</title>
     <style>
-      body { font-family: sans-serif; margin: 20px; }
+      /* Catppuccin Theme (Mocha variant) */
+      :root {
+        --base: #1e1e2e; /* Base background */
+        --text: #cdd6f4; /* Primary text */
+        --accent: #89b4fa; /* Accent color for buttons and links */
+        --accent-hover: #74a7f8; /* Accent color on hover */
+        --surface: #313244; /* Surface color for input fields */
+        --surface-hover: #45475a; /* Surface color on hover */
+        --muted: #6c7086; /* Muted text */
+        --error: #f38ba8; /* Error messages */
+      }
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        background-color: var(--base);
+        color: var(--text);
+      }
+
+      h1 {
+        color: var(--text);
+        margin-bottom: 20px;
+      }
+
       textarea {
         width: 100%;
         height: 350px;
-        border: 1px solid #999;
+        border: 1px solid var(--surface);
         padding: 10px;
         font-family: monospace;
         font-size: 14px;
+        background-color: var(--base);
+        color: var(--text);
+        border-radius: 8px;
+        resize: vertical;
       }
-      .entry { margin: 10px 0; }
+
       #doiInput {
         width: 60%;
-        padding: 5px;
+        padding: 10px;
         font-size: 16px;
+        border: 1px solid var(--surface);
+        border-radius: 8px;
+        background-color: var(--base);
+        color: var(--text);
+        margin-right: 10px;
       }
+
+      #doiInput::placeholder {
+        color: var(--muted);
+      }
+
       button {
         font-size: 16px;
-        padding: 5px 10px;
+        padding: 10px 20px;
         cursor: pointer;
+        background-color: var(--accent);
+        color: var(--base);
+        border: none;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+      }
+
+      button:hover {
+        background-color: var(--accent-hover);
+      }
+
+      .entry {
+        margin: 10px 0;
+      }
+
+      #entries {
+        margin-top: 20px;
+      }
+
+      /* Additional styling for buttons inside #entries */
+      #entries button {
+        margin-top: 10px;
+        margin-right: 10px;
+      }
+
+      /* Error message styling */
+      .error {
+        color: var(--error);
+        margin-top: 10px;
       }
     </style>
   </head>
   <body>
-    <h1>Just Bibtex</h1>
+    <h1>Just BibTeX</h1>
     <input id="doiInput" type="text" placeholder="Enter DOI" />
     <button onclick="addBibtex()">Fetch Bibtex & Add</button>
     <div id="entries"></div>
