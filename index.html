@@ -14,7 +14,8 @@
         --surface-hover: #45475a; /* Surface color on hover */
         --muted: #6c7086; /* Muted text */
         --error: #f38ba8; /* Error messages */
-        }
+      }
+
       body {
         font-family: sans-serif;
         margin: 20px;
@@ -156,9 +157,15 @@
       }
 
       async function fetchBibtexFromUrl(url) {
-        // Use Zotero's translation server to fetch BibTeX from a URL
-        const response = await fetch(`https://api.zotero.org/quickFormat?url=${encodeURIComponent(url)}&format=bibtex`);
-        if (!response.ok) throw new Error('Failed to fetch BibTeX for this URL.');
+        // Extract DOI from the URL if possible
+        const doiMatch = url.match(/10\.\d{4,}\/\S+/);
+        if (doiMatch) {
+          return await fetchBibtexFromDOI(doiMatch[0]);
+        }
+
+        // Fallback: Use CrossRef API to fetch BibTeX
+        const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(url)}/transform/application/x-bibtex`);
+        if (!response.ok) throw new Error('BibTeX not found for this URL.');
         return await response.text();
       }
 
