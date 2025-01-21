@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Just BibTeX</title>
+    <style>
+      body { font-family: sans-serif; margin: 20px; }
+      textarea {
+        width: 100%;
+        height: 350px;
+        border: 1px solid #999;
+        padding: 10px;
+        font-family: monospace;
+        font-size: 14px;
+      }
+      .entry { margin: 10px 0; }
+      #doiInput {
+        width: 60%;
+        padding: 5px;
+        font-size: 16px;
+      }
+      button {
+        font-size: 16px;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Just Bibtex</h1>
+    <input id="doiInput" type="text" placeholder="Enter DOI" />
+    <button onclick="addBibtex()">Fetch Bibtex & Add</button>
+    <div id="entries"></div>
+
+    <script>
+      function formatBibtex(bib) {
+        return bib
+          .replace(/\r\n/g, '\n')
+          .replace(/\n{2,}/g, '\n\n')
+          .trim();
+      }
+
+      function loadEntries() {
+        const saved = localStorage.getItem('bibtexEntries');
+        return saved ? JSON.parse(saved) : [];
+      }
+
+      function saveEntries(entries) {
+        localStorage.setItem('bibtexEntries', JSON.stringify(entries));
+      }
+
+      async function addBibtex() {
+        const input = document.getElementById('doiInput').value.trim();
+        if (!input) {
+          alert('Please enter a DOI.');
+          return;
+        }
+
+        // Basic DOI format validation
+        if (!/^10\.\d{4,}\/\S+$/.test(input)) {
+          alert('Invalid DOI format.');
+          return;
+        }
+
+        try {
+          const response = await fetch(`https://doi.org/${encodeURIComponent(input)}`, {
+            headers: { Accept: 'application/x-bibtex' }
+          });
+          if (!response.ok) throw new Error('BibTeX not found for this DOI.');
+          const bibtex = await response.text();
+
+          const entries = loadEntries();
+          if (entries.includes(bibtex)) {
+            alert('This entry already exists.');
+            return;
+          }
+
+          entries.push(bibtex);
+          saveEntries(entries);
+          renderEntries();
+          document.getElementById('doiInput').value = ''; // Clear input
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+
+      function renderEntries() {
+        const container = document.getElementById('entries');
+        container.innerHTML = '';
+        const entries = loadEntries().map(formatBibtex);
+        const combined = entries.join('\n\n');
+
+        const textarea = document.createElement('textarea');
+        textarea.value = combined;
+        container.appendChild(textarea);
+
+        // Copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(textarea.value);
+        };
+        container.appendChild(copyBtn);
+
+        // Download button
+        const downloadBtn = document.createElement('button');
+        downloadBtn.textContent = 'Download';
+        downloadBtn.onclick = () => {
+          const blob = new Blob([textarea.value], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'bibtex_entries.bib';
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+        container.appendChild(downloadBtn);
+      }
+
+      window.onload = renderEntries;
+    </script>
+  </body>
+</html>
