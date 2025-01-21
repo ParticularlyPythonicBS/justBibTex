@@ -239,7 +239,25 @@
         container.appendChild(downloadBtn);
       }
 
-      window.onload = renderEntries;
+      // Handle URL-based DOI
+      async function handleUrlDoi() {
+        const path = window.location.pathname.slice(1); // Remove leading slash
+        if (/^10\.\d{4,}\/\S+$/.test(path)) {
+          try {
+            const bibtex = await fetchBibtexFromDOI(path);
+            const entries = [bibtex];
+            saveEntries(entries);
+            renderEntries();
+          } catch (err) {
+            alert(err.message);
+          }
+        }
+      }
+
+      window.onload = () => {
+        handleUrlDoi(); // Check for DOI in URL
+        renderEntries(); // Render existing entries
+      };
     </script>
   </body>
 </html>
