@@ -176,15 +176,14 @@
       const crossrefResponse = await fetch(crossrefUrl);
       if (!crossrefResponse.ok) throw new Error('Failed to fetch summary.');
       const crossrefData = await crossrefResponse.json();
-      console.log(crossrefData);
       const abstractBlock = crossrefData.message.abstract || null;
-
-      const abstractMatch = abstractBlock.match(/<jats:p>(.*?)<\/jats:p>/);
-      const abstract = abstractMatch ? abstractMatch[1] : null;
-
-      // Add abstract to BibTeX
-      if (abstract) {
-        bibtex = bibtex.replace(/\}\s*$/, `,\n  abstract = {${abstract}}\n}`);
+      if (abstractBlock){
+        const abstractMatch = abstractBlock.match(/<jats:p>(.*?)<\/jats:p>/);
+        const abstract = abstractMatch ? abstractMatch[1] : null;
+        // Add abstract to BibTeX
+        if (abstract) {
+          bibtex = bibtex.replace(/\}\s*$/, `,\n  abstract = {${abstract}}\n}`);
+        }
       }
       return bibtex;
     }
@@ -239,11 +238,16 @@
       const crossrefResponse = await fetch(crossrefUrl);
       if (!crossrefResponse.ok) throw new Error('Failed to fetch summary.');
       const crossrefData = await crossrefResponse.json();
-      console.log(crossrefData);
       const abstractBlock = crossrefData.message.abstract || null;
-
-      const abstractMatch = abstractBlock.match(/<jats:p>(.*?)<\/jats:p>/);
-      const abstract = abstractMatch ? abstractMatch[1] : null;
+      if (abstractBlock){
+        const abstractMatch = abstractBlock.match(/<jats:p>(.*?)<\/jats:p>/);
+        const abstract = abstractMatch ? abstractMatch[1] : null;
+        // Add abstract to BibTeX
+        if (abstract) {
+          bibtex = bibtex.replace(/\}\s*$/, `,\n  abstract = {${abstract}}\n}`);
+        }
+      }
+      return bibtex;
     }
 
     async function addBibtex() {
