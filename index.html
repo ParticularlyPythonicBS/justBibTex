@@ -229,7 +229,7 @@
       const citationKey = generateCitationKey(bibtex);
 
       // Replace the existing citation key with the standardized one
-      bibtex = bibtex.replace(/@\w+{[\w-]+/, `@article{${citationKey}`);
+      bibtex = bibtex.replace(/@(\w+){[\w-]+/, `@$1{${citationKey}`);
 
       // Fetch summary using CrossRef API
       const crossrefUrl = `https://api.crossref.org/works/${doi}`;
@@ -249,29 +249,29 @@
     }
 
     async function fetchBibtexFromArxiv(arxivId) {
-        const response = await fetch(`https://export.arxiv.org/api/query?id_list=${arxivId}`);
-        if (!response.ok) throw new Error('Failed to fetch arXiv metadata.');
-        const text = await response.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(text, 'text/xml');
+      const response = await fetch(`https://export.arxiv.org/api/query?id_list=${arxivId}`);
+      if (!response.ok) throw new Error('Failed to fetch arXiv metadata.');
+      const text = await response.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, 'text/xml');
 
-        const entry = xmlDoc.querySelector('entry');
-        if (!entry) throw new Error('No arXiv entry found.');
+      const entry = xmlDoc.querySelector('entry');
+      if (!entry) throw new Error('No arXiv entry found.');
 
-        const title = entry.querySelector('title').textContent.replace(/\n/g, ' ').trim();
-        const authors = Array.from(entry.querySelectorAll('author name')).map(
-          (el) => el.textContent.trim()
-        );
-        const published = new Date(entry.querySelector('published').textContent);
-        const year = published.getFullYear();
-        const summary = entry.querySelector('summary').textContent.trim();
+      const title = entry.querySelector('title').textContent.replace(/\n/g, ' ').trim();
+      const authors = Array.from(entry.querySelectorAll('author name')).map(
+        (el) => el.textContent.trim()
+      );
+      const published = new Date(entry.querySelector('published').textContent);
+      const year = published.getFullYear();
+      const summary = entry.querySelector('summary').textContent.trim();
 
-        // Generate the citation key
-        const citationKey = generateCitationKey(
-          `author = {${authors.join(' and ')}}\nyear = {${year}}\ntitle = {${title}}`
-        );
+      // Generate the citation key
+      const citationKey = generateCitationKey(
+        `author = {${authors.join(' and ')}}\nyear = {${year}}\ntitle = {${title}}`
+      );
 
-        const bibtex = `@article{${citationKey},
+      const bibtex = `@article{${citationKey},
                         title = {${title}},
                         author = {${authors.join(' and ')}},
                         year = {${year}},
@@ -338,7 +338,8 @@
           const arxivId = input.match(/(\d{4}\.\d{4,5}(v\d+)?)/)?.[0];
           if (!arxivId) throw new Error('Invalid arXiv URL or ID.');
           bibtex = await fetchBibtexFromArxiv(arxivId);
-        } else {
+        }
+        else {
           // Handle journal URLs
           bibtex = await fetchBibtexFromUrl(input);
         }
